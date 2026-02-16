@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  ADMIN
+  RECEPTIONIST
+  DOCTOR
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum WaveStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  SKIPPED
+}
+
+enum PatientStatus {
+  WAITING
+  CALLED
+  IN_CONSULTATION
+  COMPLETED
+  NO_SHOW
+  DEFERRED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(RECEPTIONIST)
+  createdAt DateTime @default(now())
+  
+  // Relations
+  doctorProfile Doctor?
+  auditLogs     AuditLog[]
+}
+
+model Doctor {
+  id             String   @id @default(cuid())
+  name           String
+  specialization String
+  isAvailable    Boolean  @default(true)
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  
+  sessions       Session[]
+}
+
+model Session {
+  id             String        @id @default(cuid())
+  date           DateTime      @default(now())
+  doctorId       String
+  doctor         Doctor        @relation(fields: [doctorId], references: [id])
+  status         SessionStatus @default(ACTIVE)
+  waveSize       Int           @default(3)
+  overlapMinutes Int           @default(10)
+  createdAt      DateTime      @default(now())
+
+  waves          Wave[]
+  patients       Patient[]
+}
+
+model Wave {
+  id        String     @id @default(cuid())
+  sessionId String
+  session   Session    @relation(fields: [sessionId], references: [id])
+  waveLabel String     // A, B, C...
+  startTime DateTime?
+  endTime   DateTime?
+  status    WaveStatus @default(PENDING)
+  
+  patients  Patient[]
+}
+
+model Patient {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String
+  tokenNumber  Int
+  
+  sessionId    String
+  session      Session       @relation(fields: [sessionId], references: [id])
+  
+  waveId       String?
+  wave         Wave?         @relation(fields: [waveId], references: [id])
+  
+  status       PatientStatus @default(WAITING)
+  registeredAt DateTime      @default(now())
+  calledAt     DateTime?
+  completedAt  DateTime?
+  notes        String?
+  
+  auditLogs    AuditLog[]
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  action          String
+  performedById   String
+  performedBy     User     @relation(fields: [performedById], references: [id])
+  targetPatientId String?
+  targetPatient   Patient? @relation(fields: [targetPatientId], references: [id])
+  timestamp       DateTime @default(now())
+  details         String?
+}

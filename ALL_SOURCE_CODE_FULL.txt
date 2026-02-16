@@ -1,0 +1,2406 @@
+﻿WAVEQ SOURCE CODE EXPORT
+
+--------------------------------------------------
+FILE: .env
+--------------------------------------------------
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="supersecret-random-string-must-be-changed"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Pusher (Mocked/Optional for Dev)
+PUSHER_APP_ID="mock_id"
+PUSHER_KEY="mock_key"
+PUSHER_SECRET="mock_secret"
+PUSHER_CLUSTER="mt1"
+NEXT_PUBLIC_PUSHER_KEY="mock_key"
+NEXT_PUBLIC_PUSHER_CLUSTER="mt1"
+
+# Twilio (Optional)
+TWILIO_ACCOUNT_SID="your_sid"
+TWILIO_AUTH_TOKEN="your_token"
+TWILIO_PHONE_NUMBER="+1234567890"
+
+# Admin Setup
+ADMIN_EMAIL="admin@waveq.com"
+ADMIN_PASSWORD="password"
+
+--------------------------------------------------
+FILE: .gitignore
+--------------------------------------------------
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+--------------------------------------------------
+FILE: DEPLOYMENT.md
+--------------------------------------------------
+# Deploying WaveQ to Vercel
+
+Since this is a Next.js application, the easiest way to deploy it is using Vercel.
+
+## Prerequisites
+
+1.  **GitHub Account**: You need a GitHub account to store your code.
+2.  **Vercel Account**: You can sign up using your GitHub account at [vercel.com](https://vercel.com).
+3.  **Neon Database**: Ensure you have a Neon project set up and the connection string ready.
+4.  **Pusher Account**: Ensure you have a Pusher app created and credentials ready.
+
+## Step-by-Step Deployment Guide
+
+### 1. Push Code to GitHub
+
+Since git is not currently available/configured in this environment's terminal, you will need to initialize the repository manually if you haven't already.
+
+1.  Open your terminal/command prompt.
+2.  Navigate to the project folder:
+    ```bash
+    cd C:\Users\rebin\.gemini\antigravity\scratch\waveq
+    ```
+3.  Initialize Git and commit the code:
+    ```bash
+    git init
+    git add .
+    git commit -m "Initial commit for WaveQ"
+    ```
+4.  Create a new repository on GitHub (e.g., `waveq-app`).
+5.  Link your local repository to GitHub:
+    ```bash
+    git remote add origin https://github.com/YOUR_USERNAME/waveq-app.git
+    git branch -M main
+    git push -u origin main
+    ```
+
+### 2. Deploy on Vercel
+
+1.  Log in to your [Vercel Dashboard](https://vercel.com/dashboard).
+2.  Click **"Add New..."** -> **"Project"**.
+3.  Import the `waveq-app` repository you just created.
+4.  In the **Configure Project** screen:
+
+    *   **Framework Preset**: Next.js (should be auto-detected).
+    *   **Root Directory**: `./` (default).
+    *   **Build Command**: `next build` (default).
+    *   **Install Command**: `npm install` (default).
+
+5.  **Environment Variables**:
+    You MUST add the following variables in the "Environment Variables" section. Copy these from your `.env` file or local configuration.
+
+    | Key | Value Description |
+    | :--- | :--- |
+    | `DATABASE_URL` | Your Neon Postgres Connection String (e.g., `postgres://...`) |
+    | `NEXTAUTH_SECRET` | A random string (generate one with `openssl rand -base64 32` or similar) |
+    | `NEXTAUTH_URL` | Your production URL (e.g., `https://waveq-app.vercel.app`) |
+    | `PUSHER_APP_ID` | From Pusher Dashboard |
+    | `PUSHER_KEY` | From Pusher Dashboard |
+    | `PUSHER_SECRET` | From Pusher Dashboard |
+    | `PUSHER_CLUSTER` | From Pusher Dashboard (e.g., `ap2`) |
+    | `NEXT_PUBLIC_PUSHER_KEY` | Same as `PUSHER_KEY` |
+    | `NEXT_PUBLIC_PUSHER_CLUSTER` | Same as `PUSHER_CLUSTER` |
+    | `TWILIO_ACCOUNT_SID` | (Optional) For SMS |
+    | `TWILIO_AUTH_TOKEN` | (Optional) For SMS |
+    | `TWILIO_PHONE_NUMBER` | (Optional) For SMS |
+
+6.  Click **Deploy**.
+
+### 3. Post-Deployment Setup
+
+Once deployed, Vercel will build your application.
+
+1.  **Database Migration**: The build process includes `prisma generate`, but you might need to push the schema to the production database if it hasn't been done.
+    *   In your local terminal, run user `npx prisma db push` while your `.env` points to the production database URL.
+    *   Alternatively, you can add a build step override in Vercel settings, but `prisma db push` locally is often safer for initial setup.
+
+2.  **Verify**: Visit your new `.vercel.app` URL.
+
+### Troubleshooting
+
+*   **Database Connection Errors**: Ensure your Neon database allows connections from Vercel (0.0.0.0/0 is usually fine for serverless).
+*   **Pusher Errors**: Verify the `NEXT_PUBLIC_` variables are set correctly so the client can connect.
+
+--------------------------------------------------
+FILE: next-env.d.ts
+--------------------------------------------------
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+
+--------------------------------------------------
+FILE: next.config.mjs
+--------------------------------------------------
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
+
+export default nextConfig;
+
+--------------------------------------------------
+FILE: package.json
+--------------------------------------------------
+{
+  "name": "waveq",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "^1.0.14",
+    "@prisma/client": "^5.10.2",
+    "@radix-ui/react-avatar": "^1.0.4",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.6",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-separator": "^1.0.3",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tabs": "^1.0.4",
+    "@radix-ui/react-toast": "^1.1.5",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.3.1",
+    "lucide-react": "^0.330.0",
+    "next": "14.1.0",
+    "next-auth": "^4.24.6",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0-rc2",
+    "react": "^18",
+    "react-dom": "^18",
+    "tailwind-merge": "^2.2.1",
+    "tailwindcss-animate": "^1.0.7",
+    "twilio": "^4.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.0",
+    "postcss": "^8",
+    "prisma": "^5.10.2",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  }
+}
+
+--------------------------------------------------
+FILE: postcss.config.mjs
+--------------------------------------------------
+export default {
+    plugins: {
+        tailwindcss: {},
+        autoprefixer: {},
+    },
+};
+
+--------------------------------------------------
+FILE: preview.html
+--------------------------------------------------
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaveQ Display Board Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @layer utilities {
+            .animate-blob {
+                animation: blob 7s infinite;
+            }
+        }
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen p-4 overflow-hidden font-sans">
+
+    <div class="flex flex-col h-full gap-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center border-b border-gray-800 pb-4">
+            <h1 class="text-4xl font-bold tracking-tight">Malabar Hospital OPD</h1>
+            <div class="text-2xl font-mono text-gray-400">10:42 AM</div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+            
+            <!-- Active Wave Column (Center Stage) -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-blue-900 border border-blue-700 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                    <!-- Pulse Animation Background -->
+                    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                    
+                    <h2 class="text-3xl uppercase tracking-widest text-blue-200 mb-2">NOW SERVING</h2>
+                    <div class="flex items-baseline space-x-4">
+                        <span class="text-9xl font-black text-white">Wave A</span>
+                        <span class="text-3xl text-blue-200">10:00 AM - 10:15 AM</span>
+                    </div>
+
+                    <div class="mt-8 space-y-4">
+                        <!-- Patient 1: In Consultation -->
+                        <div class="flex justify-between items-center p-6 rounded-xl border-l-8 transition-all duration-500 bg-green-900/20 border-green-500">
+                            <div class="flex items-center space-x-6">
+                                <span class="text-5xl font-bold font-mono">#1</span>
+                                <span class="text-4xl font-semibold">John Doe</span>
+                            </div>
+                            <div class="text-2xl font-medium px-4 py-1 rounded bg-black/30 text-green-400">
+                                IN CONSULTATION
+                            </div>
+                        </div>
+
+                        <!-- Patient 2: Called -->
+                        <div class="flex justify-between items-center p-6 rounded-xl border-l-8 transition-all duration-500 bg-amber-900/20 border-amber-500">
+                            <div class="flex items-center space-x-6">
+                                <span class="text-5xl font-bold font-mono">#2</span>
+                                <span class="text-4xl font-semibold">Jane Smith</span>
+                            </div>
+                            <div class="text-2xl font-medium px-4 py-1 rounded bg-black/30 text-amber-400">
+                                CALLED
+                            </div>
+                        </div>
+
+                         <!-- Patient 3: Waiting -->
+                         <div class="flex justify-between items-center p-6 rounded-xl border-l-8 transition-all duration-500 bg-gray-800 border-gray-600">
+                            <div class="flex items-center space-x-6">
+                                <span class="text-5xl font-bold font-mono">#3</span>
+                                <span class="text-4xl font-semibold">Robert Brown</span>
+                            </div>
+                            <div class="text-2xl font-medium px-4 py-1 rounded bg-black/30 text-gray-400">
+                                WAITING
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Wave Column -->
+            <div class="lg:col-span-1 border-l border-gray-800 pl-8 space-y-6">
+                <h2 class="text-2xl font-semibold text-gray-400 mb-4">UP NEXT</h2>
+                
+                <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 opacity-75">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-5xl font-bold text-gray-200">Wave B</span>
+                        <span class="text-xl text-gray-400">10:10 AM</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-xl text-gray-300 border-b border-gray-800 pb-2">
+                            <span>Alice Cooper</span>
+                            <span class="font-mono text-gray-500">#4</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xl text-gray-300 border-b border-gray-800 pb-2">
+                            <span>Bob Marley</span>
+                            <span class="font-mono text-gray-500">#5</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xl text-gray-300 border-b border-gray-800 pb-2">
+                            <span>Charlie Puth</span>
+                            <span class="font-mono text-gray-500">#6</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-12 p-6 bg-gray-900 rounded-xl">
+                    <h3 class="text-lg font-medium text-gray-400 mb-2">Hospital Announcements</h3>
+                    <p class="text-lg">Please keep your token number ready. Silent mobile phones.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
+
+--------------------------------------------------
+FILE: README.md
+--------------------------------------------------
+# WaveQ - Patient Queue Management System
+
+A full-stack queue management system built for Malabar Hospital Kondotty.
+
+## Tech Stack
+- Next.js 14
+- Postgres (Neon) + Prisma
+- Pusher (Realtime)
+- Twilio (SMS) - *Optional configuration*
+- Tailwind CSS + shadcn/ui
+
+## Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- Pusher Account
+
+## Setup
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Environment Variables**
+   Create a `.env` file based on `.env` (already created).
+   Fill in your Database URL and Pusher credentials.
+
+3. **Database Setup**
+   Push the schema to your database:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+4. **Seed Database** (Optional)
+   You need at least one Doctor and User in the database to start.
+   You can manually create them using Prisma Studio:
+   ```bash
+   npx prisma studio
+   ```
+   Or create a seed script.
+
+5. **Run Development Server**
+   ```bash
+   npm run dev
+   ```
+
+## Key Routes
+- `/display` - Public Display Board (TV)
+- `/dashboard` - Receptionist Dashboard
+- `/token/[id]` - Patient Status Page
+
+## Note on "npx"
+If you are running on a system where `npx` is not available directly, ensure Node.js is installed correctly and fully operational.
+
+--------------------------------------------------
+FILE: tailwind.config.ts
+--------------------------------------------------
+import type { Config } from "tailwindcss";
+
+const config = {
+    darkMode: ["class"],
+    content: [
+        './pages/**/*.{ts,tsx}',
+        './components/**/*.{ts,tsx}',
+        './app/**/*.{ts,tsx}',
+        './src/**/*.{ts,tsx}',
+    ],
+    prefix: "",
+    theme: {
+        container: {
+            center: true,
+            padding: "2rem",
+            screens: {
+                "2xl": "1400px",
+            },
+        },
+        extend: {
+            colors: {
+                border: "hsl(var(--border))",
+                input: "hsl(var(--input))",
+                ring: "hsl(var(--ring))",
+                background: "hsl(var(--background))",
+                foreground: "hsl(var(--foreground))",
+                primary: {
+                    DEFAULT: "hsl(var(--primary))",
+                    foreground: "hsl(var(--primary-foreground))",
+                },
+                secondary: {
+                    DEFAULT: "hsl(var(--secondary))",
+                    foreground: "hsl(var(--secondary-foreground))",
+                },
+                destructive: {
+                    DEFAULT: "hsl(var(--destructive))",
+                    foreground: "hsl(var(--destructive-foreground))",
+                },
+                muted: {
+                    DEFAULT: "hsl(var(--muted))",
+                    foreground: "hsl(var(--muted-foreground))",
+                },
+                accent: {
+                    DEFAULT: "hsl(var(--accent))",
+                    foreground: "hsl(var(--accent-foreground))",
+                },
+                popover: {
+                    DEFAULT: "hsl(var(--popover))",
+                    foreground: "hsl(var(--popover-foreground))",
+                },
+                card: {
+                    DEFAULT: "hsl(var(--card))",
+                    foreground: "hsl(var(--card-foreground))",
+                },
+            },
+            borderRadius: {
+                lg: "var(--radius)",
+                md: "calc(var(--radius) - 2px)",
+                sm: "calc(var(--radius) - 4px)",
+            },
+            keyframes: {
+                "accordion-down": {
+                    from: { height: "0" },
+                    to: { height: "var(--radix-accordion-content-height)" },
+                },
+                "accordion-up": {
+                    from: { height: "var(--radix-accordion-content-height)" },
+                    to: { height: "0" },
+                },
+            },
+            animation: {
+                "accordion-down": "accordion-down 0.2s ease-out",
+                "accordion-up": "accordion-up 0.2s ease-out",
+            },
+        },
+    },
+    plugins: [require("tailwindcss-animate")],
+} satisfies Config;
+
+export default config;
+
+--------------------------------------------------
+FILE: tsconfig.json
+--------------------------------------------------
+{
+    "compilerOptions": {
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ],
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ]
+        }
+    },
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        ".next/types/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
+
+--------------------------------------------------
+FILE: src\app\globals.css
+--------------------------------------------------
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+--------------------------------------------------
+FILE: src\app\layout.tsx
+--------------------------------------------------
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { Toaster } from "@/components/ui/toaster"
+
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+    title: 'WaveQ - Patient Queue Management System',
+    description: 'Wave-Based Patient Queue Management System for Malabar Hospital Kondotty',
+};
+
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <html lang="en">
+            <body className={inter.className}>
+                {children}
+                <Toaster />
+            </body>
+        </html>
+    );
+}
+
+--------------------------------------------------
+FILE: src\app\page.tsx
+--------------------------------------------------
+import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+export default function Home() {
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col items-center justify-center p-4">
+            <div className="max-w-4xl w-full text-center space-y-8">
+                <div className="space-y-4">
+                    <h1 className="text-5xl font-extrabold tracking-tighter sm:text-6xl md:text-7xl text-primary">WaveQ</h1>
+                    <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                        Smart Wave-Based Patient Queue Management System
+                    </p>
+                    <p className="text-sm font-mono text-gray-400">Malabar Hospital Kondotty</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                    <Link href="/display" className="group">
+                        <Card className="h-full transition-all duration-300 hover:scale-105 hover:shadow-xl border-blue-200 hover:border-blue-500 cursor-pointer">
+                            <CardHeader>
+                                <CardTitle className="text-2xl text-blue-600 group-hover:text-blue-700">Display Board</CardTitle>
+                                <CardDescription>Public TV Screen View</CardDescription>
+                            </CardHeader>
+                            <CardContent className="text-gray-600">
+                                View the live "Now Serving" board with high-contrast animations.
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    <Link href="/dashboard" className="group">
+                        <Card className="h-full transition-all duration-300 hover:scale-105 hover:shadow-xl border-green-200 hover:border-green-500 cursor-pointer">
+                            <CardHeader>
+                                <CardTitle className="text-2xl text-green-600 group-hover:text-green-700">Receptionist</CardTitle>
+                                <CardDescription>Dashboard & Registration</CardDescription>
+                            </CardHeader>
+                            <CardContent className="text-gray-600">
+                                Register patients, manage waves, and handle status updates.
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    <Link href="/doctor" className="group">
+                        <Card className="h-full transition-all duration-300 hover:scale-105 hover:shadow-xl border-purple-200 hover:border-purple-500 cursor-pointer">
+                            <CardHeader>
+                                <CardTitle className="text-2xl text-purple-600 group-hover:text-purple-700">Doctor</CardTitle>
+                                <CardDescription>Consultation Console</CardDescription>
+                            </CardHeader>
+                            <CardContent className="text-gray-600">
+                                Simple interface to view the current wave and call patients.
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
+
+                <div className="mt-16 text-xs text-gray-400">
+                    <p>Built with Next.js 14, Tailwind, and Prisma</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\app\admin\page.tsx
+--------------------------------------------------
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+
+export default function AdminPage() {
+    return (
+        <div className="container mx-auto py-8">
+            <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card>
+                    <CardHeader><CardTitle>Manage Sessions</CardTitle></CardHeader>
+                    <CardContent>Configuration for Wave Size, Overlaps, etc.</CardContent>
+                </Card>
+                <Card>
+                    <CardHeader><CardTitle>Doctors</CardTitle></CardHeader>
+                    <CardContent>Add or Edit Doctor Profiles.</CardContent>
+                </Card>
+                <Card>
+                    <CardHeader><CardTitle>Reports</CardTitle></CardHeader>
+                    <CardContent>Export CSV of patient data.</CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\app\api\patients\route.ts
+--------------------------------------------------
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { assignPatientToWave } from '@/lib/wave-utils';
+import { pusherServer } from '@/lib/pusher';
+import { sendWaveNotification } from '@/lib/twilio';
+
+export async function POST(req: Request) {
+    try {
+        const { name, phone } = await req.json();
+
+        // Get active session
+        let session = await prisma.session.findFirst({
+            where: {
+                status: { in: ['ACTIVE', 'PAUSED'] },
+                date: {
+                    gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                    lt: new Date(new Date().setHours(23, 59, 59, 999))
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                waves: { orderBy: { startTime: 'desc' } }
+            }
+        });
+
+        if (!session) {
+            // Create new session if none exists for today? Or error?
+            // For demo, let's auto-create one.
+            const doctor = await prisma.doctor.findFirst();
+            if (!doctor) {
+                return NextResponse.json({ error: 'No doctor available to start session' }, { status: 400 });
+            }
+
+            session = await prisma.session.create({
+                data: {
+                    doctorId: doctor.id,
+                    date: new Date(),
+                    status: 'ACTIVE'
+                },
+                include: { waves: true }
+            });
+        }
+
+        // Get next token number
+        const lastPatient = await prisma.patient.findFirst({
+            where: { sessionId: session.id },
+            orderBy: { tokenNumber: 'desc' }
+        });
+        const nextToken = (lastPatient?.tokenNumber || 0) + 1;
+
+        // Create patient
+        const patient = await prisma.patient.create({
+            data: {
+                name,
+                phone,
+                tokenNumber: nextToken,
+                sessionId: session.id,
+                status: 'WAITING',
+            }
+        });
+
+        // Assign to wave
+        const wave = await assignPatientToWave(session.id, patient.id);
+
+        // Trigger Pusher update
+        await pusherServer.trigger('queue-updates', 'patient-added', {
+            patient,
+            wave
+        });
+
+        // Send SMS 
+        if (phone) {
+            // format wave time
+            const timeString = wave.startTime ? new Date(wave.startTime).toLocaleTimeString() : 'Pending';
+            // await sendWaveNotification(phone, patient.tokenNumber.toString(), timeString);
+            // Commented out to prevent accidental usage in dev without valid credentials
+        }
+
+        return NextResponse.json({ patient, wave });
+    } catch (error) {
+        console.error('Error registering patient:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+--------------------------------------------------
+FILE: src\app\dashboard\page.tsx
+--------------------------------------------------
+import { Metadata } from 'next';
+import prisma from '@/lib/prisma';
+import DashboardView from '@/components/dashboard/dashboard-view';
+import { redirect } from 'next/navigation';
+
+export const metadata: Metadata = {
+    title: 'Receptionist Dashboard - WaveQ',
+};
+
+// Ensure this page is not cached indefinitely
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardPage() {
+    // Fetch today's session
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const session = await prisma.session.findFirst({
+        where: {
+            date: {
+                gte: todayStart,
+                lt: todayEnd,
+            },
+        },
+        include: {
+            waves: {
+                orderBy: { startTime: 'asc' },
+                include: {
+                    patients: {
+                        orderBy: { tokenNumber: 'asc' }
+                    }
+                }
+            },
+            doctor: true,
+        },
+    });
+
+    return (
+        <div className="container mx-auto py-6 space-y-8">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Receptionist Dashboard</h1>
+                    <p className="text-muted-foreground">Manage patient queue and waves.</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium">
+                        {session ? `Session Active: ${session.doctor.name}` : 'No Active Session'}
+                    </span>
+                </div>
+            </div>
+
+            <DashboardView initialSession={session} />
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\app\display\page.tsx
+--------------------------------------------------
+import { Metadata } from 'next';
+import prisma from '@/lib/prisma';
+import DisplayBoard from '@/components/display/display-board';
+
+export const metadata: Metadata = {
+    title: 'Public Display - WaveQ',
+};
+
+export const dynamic = 'force-dynamic';
+
+export default async function DisplayPage() {
+    // Fetch active session and relevant waves
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const session = await prisma.session.findFirst({
+        where: {
+            date: { gte: todayStart, lt: todayEnd },
+            status: { in: ['ACTIVE', 'PAUSED'] }
+        },
+        include: {
+            waves: {
+                where: { status: { in: ['ACTIVE', 'PENDING'] } },
+                take: 2, // Current and Next
+                orderBy: { startTime: 'asc' },
+                include: {
+                    patients: {
+                        orderBy: { tokenNumber: 'asc' }
+                    }
+                }
+            }
+        }
+    });
+
+    return (
+        <div className="min-h-screen bg-black text-white p-4 overflow-hidden">
+            <DisplayBoard initialSession={session} />
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\app\doctor\page.tsx
+--------------------------------------------------
+import Prisma from '@/lib/prisma';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+export const dynamic = 'force-dynamic';
+
+export default async function DoctorPage() {
+    const session = await Prisma.session.findFirst({
+        where: {
+            status: { in: ['ACTIVE', 'PAUSED'] },
+            date: {
+                gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                lt: new Date(new Date().setHours(23, 59, 59, 999))
+            }
+        },
+        include: {
+            waves: {
+                where: { status: 'ACTIVE' },
+                include: { patients: true }
+            }
+        }
+    });
+
+    const activeWave = session?.waves[0];
+
+    return (
+        <div className="container mx-auto py-8">
+            <h1 className="text-3xl font-bold mb-6">Doctor Console</h1>
+
+            {session ? (
+                <div className="grid gap-6">
+                    <Card className="border-l-4 border-l-blue-500">
+                        <CardHeader>
+                            <CardTitle>Current Wave: {activeWave?.waveLabel || 'None'}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {activeWave?.patients.length ? (
+                                <ul className="space-y-4">
+                                    {activeWave.patients.map((p: any) => (
+                                        <li key={p.id} className="flex justify-between items-center p-4 border rounded hover:bg-muted">
+                                            <span>#{p.tokenNumber} - {p.name}</span>
+                                            <div className="space-x-2">
+                                                <Button size="sm" variant="outline">View Notes</Button>
+                                                <Button size="sm">Call Patient</Button>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-muted-foreground">No active patients in this wave.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <div className="flex gap-4">
+                        <Button variant="default" className="w-full h-16 text-lg">Next Patient</Button>
+                        <Button variant="secondary" className="w-full h-16 text-lg">Break (Pause Session)</Button>
+                    </div>
+                </div>
+            ) : (
+                <div className="text-center py-12">
+                    <h2 className="text-xl">No active session. Please ask reception to start one.</h2>
+                </div>
+            )}
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\app\login\page.tsx
+--------------------------------------------------
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
+export default function LoginPage() {
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <Card className="w-full max-w-md">
+                <CardHeader>
+                    <CardTitle className="text-center">WaveQ Login</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <Button className="w-full">Sign In</Button>
+
+                    <div className="text-center text-sm text-muted-foreground mt-4">
+                        <p>Demo Links:</p>
+                        <div className="flex justify-center space-x-4 mt-2">
+                            <Link href="/dashboard" className="text-blue-600 hover:underline">Receptionist</Link>
+                            <Link href="/doctor" className="text-blue-600 hover:underline">Doctor</Link>
+                            <Link href="/display" className="text-blue-600 hover:underline">Display Board</Link>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\app\token\[id]\page.tsx
+--------------------------------------------------
+import prisma from '@/lib/prisma';
+import { notFound } from 'next/navigation';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+export const dynamic = 'force-dynamic';
+
+export default async function PatientTokenPage({ params }: { params: { id: string } }) {
+    const token = params.id;
+
+    // Find patient by token number? 
+    // Wait, URL is /token/[id]. Is id the UUID or the Token Number?
+    // User spec: "Patient Token Page â€” /token/[id] ... Shows: Token number, Wave label..."
+    // Usually ID implies Database ID in REST, but users might prefer Token Number if it's unique per session.
+    // But Token Number resets every session. UUID is safer for URL.
+    // I will assume [id] is the UUID. 
+    // If user meant Token Number, we'd need session context or find the latest patient with that token.
+    // Let's assume UUID for robustness.
+
+    const patient = await prisma.patient.findUnique({
+        where: { id: token },
+        include: {
+            wave: true,
+            session: true,
+        }
+    });
+
+    if (!patient) {
+        // Try finding by token number in *today's* session as a fallback?
+        // For now, 404.
+        return notFound();
+    }
+
+    const wave = patient.wave;
+    const session = patient.session;
+
+    // Determine status message
+    let statusMessage = "Please wait for your wave.";
+    let statusColor = "bg-gray-100 text-gray-800";
+
+    if (wave?.status === 'ACTIVE') {
+        if (patient.status === 'CALLED') {
+            statusMessage = "Please proceed to the doctor!";
+            statusColor = "bg-green-100 text-green-800 animate-pulse";
+        } else if (patient.status === 'WAITING') {
+            statusMessage = "Your wave is active. Please be ready.";
+            statusColor = "bg-blue-100 text-blue-800";
+        }
+    } else if (wave?.status === 'COMPLETED') {
+        statusMessage = "Your wave has passed. Please contact reception.";
+        statusColor = "bg-red-100 text-red-800";
+    } else if (wave?.status === 'PENDING') {
+        statusMessage = `Your wave starts at ${wave.startTime ? new Date(wave.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'soon'}.`;
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-sm text-center shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-sm text-muted-foreground uppercase tracking-widest">Malabar Hospital OPD</CardTitle>
+                    <div className="mt-4">
+                        <h1 className="text-6xl font-black text-primary">#{patient.tokenNumber}</h1>
+                        <p className="text-lg text-muted-foreground mt-2">{patient.name}</p>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className={`p-4 rounded-lg font-medium text-lg ${statusColor}`}>
+                        {statusMessage}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-left">
+                        <div className="bg-white p-3 rounded border">
+                            <p className="text-xs text-muted-foreground">Wave</p>
+                            <p className="text-xl font-bold">{wave?.waveLabel || '--'}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded border">
+                            <p className="text-xs text-muted-foreground">Time</p>
+                            {wave?.startTime ? (
+                                <p className="text-xl font-bold">{new Date(wave.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            ) : (
+                                <p className="text-xl font-bold">--:--</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="text-xs text-center text-muted-foreground">
+                        Auto-updates every few seconds (Pull to refresh)
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\components\dashboard\dashboard-view.tsx
+--------------------------------------------------
+"use client"
+
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
+import { pusherClient } from '@/lib/pusher';
+import { useRouter } from 'next/navigation';
+
+export default function DashboardView({ initialSession }: { initialSession: any }) {
+    const [session, setSession] = useState(initialSession);
+    const [newPatientName, setNewPatientName] = useState('');
+    const [newPatientPhone, setNewPatientPhone] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+    const router = useRouter();
+
+    useEffect(() => {
+        // Subscribe to Pusher channel
+        const channel = pusherClient.subscribe('queue-updates');
+
+        channel.bind('patient-added', (data: any) => {
+            // Refresh data by re-fetching or reloading
+            // For simplicity in this demo, we'll reload the page data via router.refresh()
+            // In a real app, we'd merge state locally or fetch new data.
+            router.refresh();
+            toast({
+                title: "New Patient Added",
+                description: `${data.patient.name} added to Wave ${data.wave.waveLabel}`,
+            });
+        });
+
+        channel.bind('status-updated', (data: any) => {
+            router.refresh();
+        });
+
+        return () => {
+            pusherClient.unsubscribe('queue-updates');
+        };
+    }, [router, toast]);
+
+    // Update local state when prop changes (from router.refresh)
+    useEffect(() => {
+        setSession(initialSession);
+    }, [initialSession]);
+
+
+    const handleStartSession = async () => {
+        // API call to create session would go here
+        // For now, let's just use the patient registration to auto-create if needed as per API logic
+        toast({ title: "Start Session", description: "Use the register form to auto-start session or implement explicit start." });
+    };
+
+    const registerPatient = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newPatientName) return;
+        setLoading(true);
+
+        try {
+            const res = await fetch('/api/patients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newPatientName, phone: newPatientPhone }),
+            });
+
+            if (!res.ok) throw new Error('Failed to register');
+
+            const data = await res.json();
+            setNewPatientName('');
+            setNewPatientPhone('');
+            toast({
+                title: "Success",
+                description: `Registered ${data.patient.name} - Token #${data.patient.tokenNumber}`,
+            });
+            router.refresh();
+
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to register patient",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!session) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+                <h2 className="text-xl font-semibold">No Active Session Today</h2>
+                <p className="text-muted-foreground">Register a patient to automatically start a session.</p>
+                <Card className="w-full max-w-md">
+                    <CardHeader><CardTitle>Start New Session</CardTitle></CardHeader>
+                    <CardContent>
+                        <form onSubmit={registerPatient} className="space-y-4">
+                            <Input
+                                placeholder="Patient Name"
+                                value={newPatientName}
+                                onChange={(e) => setNewPatientName(e.target.value)}
+                            />
+                            <Input
+                                placeholder="Phone (Optional)"
+                                value={newPatientPhone}
+                                onChange={(e) => setNewPatientPhone(e.target.value)}
+                            />
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading ? 'Starting...' : 'Start Session & Register First Patient'}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    // Calculate stats
+    const totalPatients = session.waves.reduce((acc: number, wave: any) => acc + wave.patients.length, 0);
+    const waitingPatients = session.waves.reduce((acc: number, wave: any) => acc + wave.patients.filter((p: any) => p.status === 'WAITING').length, 0);
+
+    return (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Quick Stats */}
+            <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalPatients}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Waiting</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{waitingPatients}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Current Wave</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">
+                        {session.waves.find((w: any) => w.status === 'ACTIVE')?.waveLabel || 'None'}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Register Form */}
+            <Card className="md:col-span-1 lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Register Patient</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={registerPatient} className="space-y-4">
+                        <div className="space-y-2">
+                            <Input
+                                placeholder="Patient Name"
+                                value={newPatientName}
+                                onChange={(e) => setNewPatientName(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Input
+                                placeholder="Phone Number"
+                                value={newPatientPhone}
+                                onChange={(e) => setNewPatientPhone(e.target.value)}
+                            />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading ? 'Registering...' : 'Register Patient'}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+
+            {/* Waves List */}
+            <div className="md:col-span-2 lg:col-span-2 space-y-4">
+                <h2 className="text-xl font-semibold">Active Waves</h2>
+                {session.waves.map((wave: any) => (
+                    <Card key={wave.id} className={`border-l-4 ${wave.status === 'ACTIVE' ? 'border-l-primary' : wave.status === 'COMPLETED' ? 'border-l-green-500' : 'border-l-gray-300'}`}>
+                        <CardHeader className="pb-2">
+                            <div className="flex justify-between items-center">
+                                <CardTitle className="text-lg">Wave {wave.waveLabel}</CardTitle>
+                                <Badge variant={wave.status === 'ACTIVE' ? 'default' : 'secondary'}>{wave.status}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                {wave.startTime ? new Date(wave.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending'} -
+                                {wave.endTime ? new Date(wave.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                {wave.patients.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">No patients in this wave yet.</p>
+                                ) : (
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="text-left text-muted-foreground border-b">
+                                                <th className="pb-2">Token</th>
+                                                <th className="pb-2">Name</th>
+                                                <th className="pb-2">Status</th>
+                                                <th className="pb-2 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {wave.patients.map((patient: any) => (
+                                                <tr key={patient.id} className="border-b last:border-0 hover:bg-muted/50">
+                                                    <td className="py-2 font-medium">#{patient.tokenNumber}</td>
+                                                    <td className="py-2">{patient.name}</td>
+                                                    <td className="py-2">
+                                                        <Badge variant="outline" className={
+                                                            patient.status === 'CALLED' ? 'bg-yellow-100 text-yellow-800' :
+                                                                patient.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                                                    patient.status === 'NO_SHOW' ? 'bg-red-100 text-red-800' : ''
+                                                        }>{patient.status}</Badge>
+                                                    </td>
+                                                    <td className="py-2 text-right space-x-2">
+                                                        {/* Actions go here */}
+                                                        <Button size="sm" variant="ghost">Edit</Button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\components\display\display-board.tsx
+--------------------------------------------------
+"use client"
+
+import { useEffect, useState } from 'react';
+import { pusherClient } from '@/lib/pusher';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils'; // Make sure utils is imported for class merging
+
+export default function DisplayBoard({ initialSession }: { initialSession: any }) {
+    const [session, setSession] = useState(initialSession);
+    const router = useRouter();
+
+    useEffect(() => {
+        const channel = pusherClient.subscribe('queue-updates');
+
+        // Bind to all relevant events
+        channel.bind('patient-added', () => router.refresh());
+        channel.bind('wave-updated', () => router.refresh());
+        channel.bind('status-updated', () => router.refresh());
+
+        return () => {
+            pusherClient.unsubscribe('queue-updates');
+        };
+    }, [router]);
+
+    useEffect(() => {
+        setSession(initialSession);
+    }, [initialSession]);
+
+    if (!session) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <h1 className="text-4xl font-bold">Waiting for Session Start...</h1>
+            </div>
+        );
+    }
+
+    const activeWave = session.waves.find((w: any) => w.status === 'ACTIVE');
+    const nextWave = session.waves.find((w: any) => w.status === 'PENDING');
+
+    return (
+        <div className="flex flex-col h-full gap-8">
+            {/* Header */}
+            <header className="flex justify-between items-center border-b border-gray-800 pb-4">
+                <h1 className="text-4xl font-bold tracking-tight">Malabar Hospital OPD</h1>
+                <div className="text-2xl font-mono text-gray-400">
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+            </header>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+
+                {/* Active Wave Column (Center Stage) */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="bg-blue-900 border border-blue-700 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                        {/* Pulse Animation Background */}
+                        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+
+                        <h2 className="text-3xl font-uppercase tracking-widest text-blue-200 mb-2">NOW SERVING</h2>
+                        <div className="flex items-baseline space-x-4">
+                            <span className="text-9xl font-black text-white">
+                                Wave {activeWave?.waveLabel || '--'}
+                            </span>
+                            {activeWave && (
+                                <span className="text-3xl text-blue-200">
+                                    {new Date(activeWave.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    -
+                                    {new Date(activeWave.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mt-8 space-y-4">
+                            {activeWave?.patients.length > 0 ? (
+                                <div className="grid gap-4">
+                                    {activeWave.patients.map((patient: any) => (
+                                        <div key={patient.id} className={cn(
+                                            "flex justify-between items-center p-6 rounded-xl border-l-8 transition-all duration-500",
+                                            patient.status === 'CALLED' ? "bg-amber-500/20 border-amber-500" :
+                                                patient.status === 'IN_CONSULTATION' ? "bg-green-500/20 border-green-500" :
+                                                    "bg-gray-800 border-gray-600"
+                                        )}>
+                                            <div className="flex items-center space-x-6">
+                                                <span className="text-5xl font-bold font-mono">#{patient.tokenNumber}</span>
+                                                <span className="text-4xl font-semibold">{patient.name}</span>
+                                            </div>
+                                            <div className="text-2xl font-medium px-4 py-1 rounded bg-black/30">
+                                                {patient.status.replace('_', ' ')}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-2xl text-gray-400 italic">No patients currently in this wave.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Upcoming Wave Column */}
+                <div className="lg:col-span-1 border-l border-gray-800 pl-8 space-y-6">
+                    <h2 className="text-2xl font-semibold text-gray-400 mb-4">UP NEXT</h2>
+
+                    {nextWave ? (
+                        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 opacity-75">
+                            <div className="flex justify-between items-center mb-4">
+                                <span className="text-5xl font-bold text-gray-200">Wave {nextWave.waveLabel}</span>
+                                <span className="text-xl text-gray-400">
+                                    {new Date(nextWave.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                            <div className="space-y-3">
+                                {nextWave.patients.map((patient: any) => (
+                                    <div key={patient.id} className="flex justify-between items-center text-xl text-gray-300 border-b border-gray-800 pb-2 last:border-0">
+                                        <span>{patient.name}</span>
+                                        <span className="font-mono text-gray-500">#{patient.tokenNumber}</span>
+                                    </div>
+                                ))}
+                                {nextWave.patients.length === 0 && <p className="text-gray-500">Filling up...</p>}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-gray-500 text-xl">No upcoming waves scheduled.</div>
+                    )}
+
+                    <div className="mt-12 p-6 bg-gray-900 rounded-xl">
+                        <h3 className="text-lg font-medium text-gray-400 mb-2">Hospital Announcements</h3>
+                        <p className="text-lg">Please keep your token number ready. Silent mobile phones.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+}
+
+--------------------------------------------------
+FILE: src\components\ui\badge.tsx
+--------------------------------------------------
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const badgeVariants = cva(
+    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+    {
+        variants: {
+            variant: {
+                default:
+                    "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+                secondary:
+                    "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                destructive:
+                    "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+                outline: "text-foreground",
+            },
+        },
+        defaultVariants: {
+            variant: "default",
+        },
+    }
+)
+
+export interface BadgeProps
+    extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> { }
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+    return (
+        <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    )
+}
+
+export { Badge, badgeVariants }
+
+--------------------------------------------------
+FILE: src\components\ui\button.tsx
+--------------------------------------------------
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    {
+        variants: {
+            variant: {
+                default: "bg-primary text-primary-foreground hover:bg-primary/90",
+                destructive:
+                    "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                outline:
+                    "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                secondary:
+                    "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                ghost: "hover:bg-accent hover:text-accent-foreground",
+                link: "text-primary underline-offset-4 hover:underline",
+            },
+            size: {
+                default: "h-10 px-4 py-2",
+                sm: "h-9 rounded-md px-3",
+                lg: "h-11 rounded-md px-8",
+                icon: "h-10 w-10",
+            },
+        },
+        defaultVariants: {
+            variant: "default",
+            size: "default",
+        },
+    }
+)
+
+export interface ButtonProps
+    extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+    asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ className, variant, size, asChild = false, ...props }, ref) => {
+        const Comp = asChild ? Slot : "button"
+        return (
+            <Comp
+                className={cn(buttonVariants({ variant, size, className }))}
+                ref={ref}
+                {...props}
+            />
+        )
+    }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+--------------------------------------------------
+FILE: src\components\ui\card.tsx
+--------------------------------------------------
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div
+        ref={ref}
+        className={cn(
+            "rounded-lg border bg-card text-card-foreground shadow-sm",
+            className
+        )}
+        {...props}
+    />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div
+        ref={ref}
+        className={cn("flex flex-col space-y-1.5 p-6", className)}
+        {...props}
+    />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+    HTMLParagraphElement,
+    React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+    <h3
+        ref={ref}
+        className={cn(
+            "text-2xl font-semibold leading-none tracking-tight",
+            className
+        )}
+        {...props}
+    />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+    HTMLParagraphElement,
+    React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+    <p
+        ref={ref}
+        className={cn("text-sm text-muted-foreground", className)}
+        {...props}
+    />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+    <div
+        ref={ref}
+        className={cn("flex items-center p-6 pt-0", className)}
+        {...props}
+    />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+--------------------------------------------------
+FILE: src\components\ui\input.tsx
+--------------------------------------------------
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+export interface InputProps
+    extends React.InputHTMLAttributes<HTMLInputElement> { }
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+    ({ className, type, ...props }, ref) => {
+        return (
+            <input
+                type={type}
+                className={cn(
+                    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                    className
+                )}
+                ref={ref}
+                {...props}
+            />
+        )
+    }
+)
+Input.displayName = "Input"
+
+export { Input }
+
+--------------------------------------------------
+FILE: src\components\ui\toast.tsx
+--------------------------------------------------
+"use client"
+
+import * as React from "react"
+import * as ToastPrimitives from "@radix-ui/react-toast"
+import { cva, type VariantProps } from "class-variance-authority"
+import { X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const ToastProvider = ToastPrimitives.Provider
+
+const ToastViewport = React.forwardRef<
+    React.ElementRef<typeof ToastPrimitives.Viewport>,
+    React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
+>(({ className, ...props }, ref) => (
+    <ToastPrimitives.Viewport
+        ref={ref}
+        className={cn(
+            "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
+            className
+        )}
+        {...props}
+    />
+))
+ToastViewport.displayName = ToastPrimitives.Viewport.displayName
+
+const toastVariants = cva(
+    "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+    {
+        variants: {
+            variant: {
+                default: "border bg-background text-foreground",
+                destructive:
+                    "destructive group border-destructive bg-destructive text-destructive-foreground",
+            },
+        },
+        defaultVariants: {
+            variant: "default",
+        },
+    }
+)
+
+const Toast = React.forwardRef<
+    React.ElementRef<typeof ToastPrimitives.Root>,
+    React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
+    VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => {
+    return (
+        <ToastPrimitives.Root
+            ref={ref}
+            className={cn(toastVariants({ variant }), className)}
+            {...props}
+        />
+    )
+})
+Toast.displayName = ToastPrimitives.Root.displayName
+
+const ToastAction = React.forwardRef<
+    React.ElementRef<typeof ToastPrimitives.Action>,
+    React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
+>(({ className, ...props }, ref) => (
+    <ToastPrimitives.Action
+        ref={ref}
+        className={cn(
+            "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
+            className
+        )}
+        {...props}
+    />
+))
+ToastAction.displayName = ToastPrimitives.Action.displayName
+
+const ToastClose = React.forwardRef<
+    React.ElementRef<typeof ToastPrimitives.Close>,
+    React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
+>(({ className, ...props }, ref) => (
+    <ToastPrimitives.Close
+        ref={ref}
+        className={cn(
+            "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+            className
+        )}
+        toast-close=""
+        {...props}
+    >
+        <X className="h-4 w-4" />
+    </ToastPrimitives.Close>
+))
+ToastClose.displayName = ToastPrimitives.Close.displayName
+
+const ToastTitle = React.forwardRef<
+    React.ElementRef<typeof ToastPrimitives.Title>,
+    React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
+>(({ className, ...props }, ref) => (
+    <ToastPrimitives.Title
+        ref={ref}
+        className={cn("text-sm font-semibold", className)}
+        {...props}
+    />
+))
+ToastTitle.displayName = ToastPrimitives.Title.displayName
+
+const ToastDescription = React.forwardRef<
+    React.ElementRef<typeof ToastPrimitives.Description>,
+    React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
+>(({ className, ...props }, ref) => (
+    <ToastPrimitives.Description
+        ref={ref}
+        className={cn("text-sm opacity-90", className)}
+        {...props}
+    />
+))
+ToastDescription.displayName = ToastPrimitives.Description.displayName
+
+type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
+
+type ToastActionElement = React.ReactElement<typeof ToastAction>
+
+export {
+    type ToastProps,
+    type ToastActionElement,
+    ToastProvider,
+    ToastViewport,
+    Toast,
+    ToastTitle,
+    ToastDescription,
+    ToastClose,
+    ToastAction,
+}
+
+--------------------------------------------------
+FILE: src\components\ui\toaster.tsx
+--------------------------------------------------
+"use client"
+
+import {
+    Toast,
+    ToastClose,
+    ToastDescription,
+    ToastProvider,
+    ToastTitle,
+    ToastViewport,
+} from "@/components/ui/toast"
+import { useToast } from "@/components/ui/use-toast"
+
+export function Toaster() {
+    const { toasts } = useToast()
+
+    return (
+        <ToastProvider>
+            {toasts.map(function ({ id, title, description, action, ...props }) {
+                return (
+                    <Toast key={id} {...props}>
+                        <div className="grid gap-1">
+                            {title && <ToastTitle>{title}</ToastTitle>}
+                            {description && (
+                                <ToastDescription>{description}</ToastDescription>
+                            )}
+                        </div>
+                        {action}
+                        <ToastClose />
+                    </Toast>
+                )
+            })}
+            <ToastViewport />
+        </ToastProvider>
+    )
+}
+
+--------------------------------------------------
+FILE: src\components\ui\use-toast.ts
+--------------------------------------------------
+"use client"
+
+// Inspired by react-hot-toast library
+import * as React from "react"
+
+import type {
+    ToastActionElement,
+    ToastProps,
+} from "@/components/ui/toast"
+
+const TOAST_LIMIT = 1
+const TOAST_REMOVE_DELAY = 1000000
+
+type ToasterToast = ToastProps & {
+    id: string
+    title?: React.ReactNode
+    description?: React.ReactNode
+    action?: ToastActionElement
+}
+
+const actionTypes = {
+    ADD_TOAST: "ADD_TOAST",
+    UPDATE_TOAST: "UPDATE_TOAST",
+    DISMISS_TOAST: "DISMISS_TOAST",
+    REMOVE_TOAST: "REMOVE_TOAST",
+} as const
+
+let count = 0
+
+function genId() {
+    count = (count + 1) % Number.MAX_SAFE_INTEGER
+    return count.toString()
+}
+
+type ActionType = typeof actionTypes
+
+type Action =
+    | {
+        type: ActionType["ADD_TOAST"]
+        toast: ToasterToast
+    }
+    | {
+        type: ActionType["UPDATE_TOAST"]
+        toast: Partial<ToasterToast>
+    }
+    | {
+        type: ActionType["DISMISS_TOAST"]
+        toastId?: ToasterToast["id"]
+    }
+    | {
+        type: ActionType["REMOVE_TOAST"]
+        toastId?: ToasterToast["id"]
+    }
+
+interface State {
+    toasts: ToasterToast[]
+}
+
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+const addToRemoveQueue = (toastId: string) => {
+    if (toastTimeouts.has(toastId)) {
+        return
+    }
+
+    const timeout = setTimeout(() => {
+        toastTimeouts.delete(toastId)
+        dispatch({
+            type: "REMOVE_TOAST",
+            toastId: toastId,
+        })
+    }, TOAST_REMOVE_DELAY)
+
+    toastTimeouts.set(toastId, timeout)
+}
+
+export const reducer = (state: State, action: Action): State => {
+    switch (action.type) {
+        case "ADD_TOAST":
+            return {
+                ...state,
+                toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+            }
+
+        case "UPDATE_TOAST":
+            return {
+                ...state,
+                toasts: state.toasts.map((t) =>
+                    t.id === action.toast.id ? { ...t, ...action.toast } : t
+                ),
+            }
+
+        case "DISMISS_TOAST": {
+            const { toastId } = action
+
+            // ! Side effects ! - This could be extracted into a dismissToast() action,
+            // but I'll keep it here for simplicity
+            if (toastId) {
+                addToRemoveQueue(toastId)
+            } else {
+                state.toasts.forEach((toast) => {
+                    addToRemoveQueue(toast.id)
+                })
+            }
+
+            return {
+                ...state,
+                toasts: state.toasts.map((t) =>
+                    t.id === toastId || action.toastId === undefined
+                        ? {
+                            ...t,
+                            open: false,
+                        }
+                        : t
+                ),
+            }
+        }
+        case "REMOVE_TOAST":
+            if (action.toastId === undefined) {
+                return {
+                    ...state,
+                    toasts: [],
+                }
+            }
+            return {
+                ...state,
+                toasts: state.toasts.filter((t) => t.id !== action.toastId),
+            }
+    }
+}
+
+const listeners: Array<(state: State) => void> = []
+
+let memoryState: State = { toasts: [] }
+
+function dispatch(action: Action) {
+    memoryState = reducer(memoryState, action)
+    listeners.forEach((listener) => {
+        listener(memoryState)
+    })
+}
+
+type Toast = Omit<ToasterToast, "id">
+
+function toast({ ...props }: Toast) {
+    const id = genId()
+
+    const update = (props: ToasterToast) =>
+        dispatch({
+            type: "UPDATE_TOAST",
+            toast: { ...props, id },
+        })
+    const dismiss = () =>
+        dispatch({ type: "DISMISS_TOAST", toastId: id })
+
+    dispatch({
+        type: "ADD_TOAST",
+        toast: {
+            ...props,
+            id,
+            open: true,
+            onOpenChange: (open) => {
+                if (!open) dismiss()
+            },
+        },
+    })
+
+    return {
+        id,
+        dismiss,
+        update,
+    }
+}
+
+function useToast() {
+    const [state, setState] = React.useState<State>(memoryState)
+
+    React.useEffect(() => {
+        listeners.push(setState)
+        return () => {
+            const index = listeners.indexOf(setState)
+            if (index > -1) {
+                listeners.splice(index, 1)
+            }
+        }
+    }, [state])
+
+    return {
+        ...state,
+        toast,
+        dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    }
+}
+
+export { useToast, toast }
+
+--------------------------------------------------
+FILE: src\lib\prisma.ts
+--------------------------------------------------
+import { PrismaClient } from '@prisma/client';
+
+const prismaClientSingleton = () => {
+    return new PrismaClient();
+};
+
+type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;
+
+const globalForPrisma = globalThis as unknown as {
+    prisma: PrismaClientSingleton | undefined;
+};
+
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+
+export default prisma;
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+--------------------------------------------------
+FILE: src\lib\pusher.ts
+--------------------------------------------------
+import PusherServer from 'pusher';
+import PusherClient from 'pusher-js';
+
+const isMock = process.env.PUSHER_APP_ID === 'mock_id' || !process.env.PUSHER_APP_ID;
+
+// Mock Server implementation
+const mockPusherServer = {
+    trigger: async (channel: string, event: string, data: any) => {
+        console.log(`[Pusher Mock] Triggered '${event}' on '${channel}'`, data);
+        return Promise.resolve();
+    }
+} as unknown as PusherServer;
+
+// Real Server implementation
+const realPusherServer = typeof window === 'undefined' ? new PusherServer({
+    appId: process.env.PUSHER_APP_ID!,
+    key: process.env.PUSHER_KEY!,
+    secret: process.env.PUSHER_SECRET!,
+    cluster: process.env.PUSHER_CLUSTER!,
+    useTLS: true,
+}) : null;
+
+export const pusherServer = isMock ? mockPusherServer : realPusherServer!;
+
+// Mock Client
+const mockPusherClient = {
+    subscribe: (channel: string) => ({
+        bind: (event: string, callback: Function) => console.log(`[Pusher Mock] Bound to '${event}' on '${channel}'`),
+        unbind: () => { },
+    }),
+    unsubscribe: () => { },
+} as unknown as PusherClient;
+
+export const pusherClient = isMock ? mockPusherClient : new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+});
+
+--------------------------------------------------
+FILE: src\lib\twilio.ts
+--------------------------------------------------
+import twilio from 'twilio';
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+const client = twilio(accountSid, authToken);
+
+export const sendWaveNotification = async (to: string, token: string, waveTime: string) => {
+    try {
+        const message = await client.messages.create({
+            body: `WaveQ: You have been registered. Your Token is #${token}. Your Wave (${waveTime}) is coming up. Check status: ${process.env.NEXTAUTH_URL}/token/${token}`,
+            from: phoneNumber,
+            to: to,
+        });
+        return message;
+    } catch (error) {
+        console.error('Twilio Error:', error);
+        return null;
+    }
+};
+
+--------------------------------------------------
+FILE: src\lib\utils.ts
+--------------------------------------------------
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs))
+}
+
+--------------------------------------------------
+FILE: src\lib\wave-utils.ts
+--------------------------------------------------
+import prisma from './prisma';
+
+export const WAVE_SIZE_DEFAULT = 3;
+export const OVERLAP_MINUTES_DEFAULT = 10;
+export const WAVE_DURATION_MINUTES = 15;
+
+export async function assignPatientToWave(sessionId: string, patientId: string) {
+    // 1. Get current session details
+    const session = await prisma.session.findUnique({
+        where: { id: sessionId },
+        include: {
+            waves: {
+                orderBy: { startTime: 'desc' },
+                include: { _count: { select: { patients: true } } }
+            }
+        }
+    });
+
+    if (!session) throw new Error('Session not found');
+
+    const waveSize = session.waveSize || WAVE_SIZE_DEFAULT;
+    const overlap = session.overlapMinutes || OVERLAP_MINUTES_DEFAULT;
+
+    // 2. Check if the latest created wave has space
+    let waveToAssign = null;
+    const latestWave = session.waves[0]; // Since ordered by startTime desc
+
+    if (latestWave && latestWave._count.patients < waveSize) {
+        waveToAssign = latestWave;
+    } else {
+        // 3. Create new wave
+        // Calculate start time
+        let newStartTime: Date;
+        let label = 'A';
+
+        if (latestWave) {
+            // Calculate next label (A -> B -> C...)
+            const lastLabelCode = latestWave.waveLabel.charCodeAt(0);
+            label = String.fromCharCode(lastLabelCode + 1);
+
+            // Calculate time
+            if (latestWave.startTime) {
+                newStartTime = new Date(latestWave.startTime.getTime() + overlap * 60000);
+            } else {
+                // Fallback if previous wave has no time?
+                newStartTime = new Date();
+            }
+        } else {
+            // First wave
+            newStartTime = new Date(); // Start immediately? Or session start time?
+            // Assuming session start implies now or configured time.
+        }
+
+        const newEndTime = new Date(newStartTime.getTime() + WAVE_DURATION_MINUTES * 60000);
+
+        waveToAssign = await prisma.wave.create({
+            data: {
+                sessionId,
+                waveLabel: label,
+                startTime: newStartTime,
+                endTime: newEndTime,
+                status: 'PENDING',
+            }
+        });
+    }
+
+    // 4. Update patient with waveId
+    await prisma.patient.update({
+        where: { id: patientId },
+        data: { waveId: waveToAssign.id }
+    });
+
+    return waveToAssign;
+}
+
+--------------------------------------------------
+FILE: prisma\schema.prisma
+--------------------------------------------------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  ADMIN
+  RECEPTIONIST
+  DOCTOR
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum WaveStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  SKIPPED
+}
+
+enum PatientStatus {
+  WAITING
+  CALLED
+  IN_CONSULTATION
+  COMPLETED
+  NO_SHOW
+  DEFERRED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(RECEPTIONIST)
+  createdAt DateTime @default(now())
+  
+  // Relations
+  doctorProfile Doctor?
+  auditLogs     AuditLog[]
+}
+
+model Doctor {
+  id             String   @id @default(cuid())
+  name           String
+  specialization String
+  isAvailable    Boolean  @default(true)
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  
+  sessions       Session[]
+}
+
+model Session {
+  id             String        @id @default(cuid())
+  date           DateTime      @default(now())
+  doctorId       String
+  doctor         Doctor        @relation(fields: [doctorId], references: [id])
+  status         SessionStatus @default(ACTIVE)
+  waveSize       Int           @default(3)
+  overlapMinutes Int           @default(10)
+  createdAt      DateTime      @default(now())
+
+  waves          Wave[]
+  patients       Patient[]
+}
+
+model Wave {
+  id        String     @id @default(cuid())
+  sessionId String
+  session   Session    @relation(fields: [sessionId], references: [id])
+  waveLabel String     // A, B, C...
+  startTime DateTime?
+  endTime   DateTime?
+  status    WaveStatus @default(PENDING)
+  
+  patients  Patient[]
+}
+
+model Patient {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String
+  tokenNumber  Int
+  
+  sessionId    String
+  session      Session       @relation(fields: [sessionId], references: [id])
+  
+  waveId       String?
+  wave         Wave?         @relation(fields: [waveId], references: [id])
+  
+  status       PatientStatus @default(WAITING)
+  registeredAt DateTime      @default(now())
+  calledAt     DateTime?
+  completedAt  DateTime?
+  notes        String?
+  
+  auditLogs    AuditLog[]
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  action          String
+  performedById   String
+  performedBy     User     @relation(fields: [performedById], references: [id])
+  targetPatientId String?
+  targetPatient   Patient? @relation(fields: [targetPatientId], references: [id])
+  timestamp       DateTime @default(now())
+  details         String?
+}
